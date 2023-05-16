@@ -9,17 +9,22 @@ from pathlib import Path
 # file_name = 'dvm.svg'
 # with open (file_name, 'wb') as file:
 #     file.write(responce.content)
+#
+# def check_for_redirect:
+
 
 Path("books").mkdir(parents=True, exist_ok=True)
-for book_number in range (32170, 32180):
-    url = f"https://tululu.org/txt.php?id={book_number}"
+for book_number in range(1,11):
+    payload = {'id': book_number}
+    url = "https://tululu.org/txt.php"
+
     # print(url)
 
-    responce = requests.get(url)
+    responce = requests.get(url, params=payload)
     responce.raise_for_status()
 # https://tululu.org/txt.php?id=32168
 
 
-    file_name = f'books/{book_number}.txt'
+    file_name = f'books/id{book_number}.txt'
     with open (file_name, 'wb') as file:
         file.write(responce.content)
