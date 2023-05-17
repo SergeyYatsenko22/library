@@ -22,7 +22,7 @@ for book_number in range(1,11):
     try:
         check_for_redirect(responce)
     except requests.exceptions.HTTPError:
-        break
+        continue
 
 # https://tululu.org/txt.php?id=32168
 
