@@ -5,6 +5,8 @@ from pathlib import Path
 def check_for_redirect(responce):
     if not responce.history:
         pass
+    else:
+        return requests.exceptions.HTTPError
 
 
 
@@ -20,7 +22,7 @@ for book_number in range(1,11):
     try:
         check_for_redirect(responce)
     except requests.exceptions.HTTPError:
-        raise
+        break
 
 # https://tululu.org/txt.php?id=32168
 
