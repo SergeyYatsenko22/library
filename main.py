@@ -4,24 +4,50 @@ from bs4 import BeautifulSoup
 import os
 from pathvalidate import sanitize_filename
 from urllib.parse import urljoin
-from urllib.parse import urlparse, urlsplit
 
 
-def download_txt(url, filename, id=1, folder='books/'):
+def parse_book_page(content):
+    soup = BeautifulSoup(content.text, 'lxml')
+    title_tag = soup.find('h1')
+    title = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[0]
+    author = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[1]
+    genres = [genre.text for genre in soup.find('span', class_='d_book').find_all('a')]
 
-    response = requests.get(url)
-    response.raise_for_status()
+    book = {
+            'Заголовок: ': title,
+            'Автор: ': author,
+            'Жанр: ': genres,
+    }
+    comments = soup.find_all(class_='texts')
+    for comment in comments:
+        book['Комментарии: ']= comment.text.split(')')[1]
 
-    file_name = f'{id}' + '. ' + sanitize_filename(filename)+".txt"
+
+    return book
+
+
+def download_txt(content, id=1, folder='books/'):
+    soup = BeautifulSoup(content.text, 'lxml')
+    title_tag = soup.find('h1')
+    title = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[0]
+    payload = {'id': book_number}
+    url_book_download = "https://tululu.org/txt.php"
+
+    response_book_download = requests.get(url_book_download, params=payload)
+    response_book_download.raise_for_status()
+
+    file_name = f'{id}' + '. ' + sanitize_filename(title)+".txt"
+
     with open (os.path.join(folder, file_name), 'wb') as file:
-        file.write(response.content)
+        file.write(response_book_download.content)
 
-    return os.path.join(folder, file_name)
 
-def download_image(url, id=1, folder='images/'):
-    link = urlparse('https://tululu.org/shots/9.jpg')
-    response = requests.get(url)
+def download_image(content, id=1, folder='images/'):
+    soup = BeautifulSoup(content.text, 'lxml')
+    image = soup.find(class_='bookimage').find('img')['src']
+    response = requests.get(urljoin('https://tululu.org/', image))
     response.raise_for_status()
+
 
     file_name = f'{id}' + ".jpg"
     with open (os.path.join(folder, file_name), 'wb') as file:
@@ -54,30 +80,9 @@ for book_number in range(1,11):
     except requests.exceptions.HTTPError:
         continue
 
-    soup = BeautifulSoup(response_book.text, 'lxml')
-    title_tag = soup.find('h1')
-    title = 'Заголовок: ' + title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[0]
-    print(title)
-    image = soup.find(class_='bookimage').find('img')['src']
-    # print(urljoin('https://tululu.org/', image))
-    image_url = urljoin('https://tululu.org/', image)
 
-    # comments = soup.find_all(class_='texts')
-    # for comment in comments:
-    #     print(comment.text.split(')')[1])
-    # print()
+    # print(parse_book_page(response_book))
 
-    genres = [genre.text for genre in soup.find('span', class_='d_book').find_all('a')]
-    print(genres)
-    print()
+    download_txt(response_book, book_number)
+    # download_image(response_book, book_number)
 
-    # download_txt(f'{url_book}{book_number}', title, book_number)
-    # download_image(image_url, book_number)
-
-
-
-
-    # https://tululu.org/shots/6.jpg
-
-
-# https://tululu.org/txt.php?id=32168
