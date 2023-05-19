@@ -43,8 +43,8 @@ for book_number in range(1,11):
     url_book = "https://tululu.org/b"
     url_book_download = "https://tululu.org/txt.php"
 
-    response_book_title = requests.get(f'{url_book}{book_number}')
-    response_book_title.raise_for_status()
+    response_book = requests.get(f'{url_book}{book_number}')
+    response_book.raise_for_status()
 
     response_book_download = requests.get(url_book_download, params=payload)
     response_book_download.raise_for_status()
@@ -54,18 +54,21 @@ for book_number in range(1,11):
     except requests.exceptions.HTTPError:
         continue
 
-    soup = BeautifulSoup(response_book_title.text, 'lxml')
+    soup = BeautifulSoup(response_book.text, 'lxml')
     title_tag = soup.find('h1')
     title = 'Заголовок: ' + title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[0]
     print(title)
-    print()
     image = soup.find(class_='bookimage').find('img')['src']
     # print(urljoin('https://tululu.org/', image))
     image_url = urljoin('https://tululu.org/', image)
 
-    comments = soup.find_all(class_='texts')
-    for comment in comments:
-        print(comment.text.split(')')[1])
+    # comments = soup.find_all(class_='texts')
+    # for comment in comments:
+    #     print(comment.text.split(')')[1])
+    # print()
+
+    genres = [genre.text for genre in soup.find('span', class_='d_book').find_all('a')]
+    print(genres)
     print()
 
     # download_txt(f'{url_book}{book_number}', title, book_number)
