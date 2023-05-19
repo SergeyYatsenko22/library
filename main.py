@@ -57,18 +57,22 @@ for book_number in range(1,11):
     soup = BeautifulSoup(response_book_title.text, 'lxml')
     title_tag = soup.find('h1')
     title = 'Заголовок: ' + title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[0]
-    # print(title)
+    print(title)
+    print()
     image = soup.find(class_='bookimage').find('img')['src']
-    print(urljoin('https://tululu.org/', image))
+    # print(urljoin('https://tululu.org/', image))
     image_url = urljoin('https://tululu.org/', image)
 
-    # download_txt(f'{url_book}{book_number}', title, book_number)
-    download_image(image_url, book_number)
+    comments = soup.find_all(class_='texts')
+    for comment in comments:
+        print(comment.text.split(')')[1])
+    print()
 
-    # link = urlparse('https://tululu.org/shots/9.jpg')
-    # link1 = urlsplit('https://tululu.org/shots/9.jpg')
-    # print(link)
-    # print(link1)
+    # download_txt(f'{url_book}{book_number}', title, book_number)
+    # download_image(image_url, book_number)
+
+
+
 
     # https://tululu.org/shots/6.jpg
 
