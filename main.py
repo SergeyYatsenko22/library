@@ -21,14 +21,17 @@ def parse_book_page(content):
     author = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[1]
     genres = [genre.text for genre in soup.find('span', class_='d_book').find_all('a')]
 
+    comments = soup.find_all(class_='texts')
+    comments_list = []
+    for comment in comments:
+        comments_list.append(comment.text.split(')')[1])
+
     book = {
         'Заголовок: ': title,
         'Автор: ': author,
         'Жанр: ': genres,
+        'Комментарии: ': comments_list
     }
-    comments = soup.find_all(class_='texts')
-    for comment in comments:
-        book['Комментарии: '] = comment.text.split(')')[1]
 
     return book
 
