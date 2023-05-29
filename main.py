@@ -88,12 +88,6 @@ def main():
                 print("Ошибка соединения", file=sys.stderr)
 
         try:
-            book_response.raise_for_status()
-        except requests.exceptions.HTTPError:
-            print("Страницы не существует", file=sys.stderr)
-            continue
-
-        try:
             check_for_redirect(book_response)
         except requests.exceptions.HTTPError:
             print("Нет книги на сайте", file=sys.stderr)
