@@ -50,12 +50,12 @@ def download_txt(title, id=1, folder='books/'):
     payload = {'id': id}
     url_book_download = 'https://tululu.org/txt.php'
 
-    response_book_download = requests.get(url_book_download, params=payload)
-    response_book_download.raise_for_status()
+    book_downloading_response = requests.get(url_book_download, params=payload)
+    book_downloading_response.raise_for_status()
 
     file_name = f'{id}. {sanitize_filename(title)}.txt'
     with open(os.path.join(folder, file_name), 'wb') as file:
-        file.write(response_book_download.content)
+        file.write(book_downloading_response.content)
 
 
 def check_for_redirect(response):
@@ -80,31 +80,31 @@ def main():
 
         while True:
             try:
-                response_book = requests.get(f'{book_url}{book_number}/', allow_redirects=False)
-                response_book.raise_for_status()
+                book_response = requests.get(f'{book_url}{book_number}/', allow_redirects=False)
+                book_response.raise_for_status()
                 break
             except requests.exceptions.ConnectionError:
                 sleep(5)
                 print("Ошибка соединения", file=sys.stderr)
 
-        response_book = requests.get(f'{book_url}{book_number}/')
+        book_response = requests.get(f'{book_url}{book_number}/')
 
         try:
-            response_book.raise_for_status()
+            book_response.raise_for_status()
         except requests.exceptions.HTTPError:
             print("Страницы не существует", file=sys.stderr)
             continue
 
         try:
-            check_for_redirect(response_book)
+            check_for_redirect(book_response)
         except requests.exceptions.HTTPError:
             print("Нет книги для скачивания на сайте", file=sys.stderr)
             continue
 
-        if not parse_book_page(response_book):
+        if not parse_book_page(book_response):
             continue
-        download_txt(parse_book_page(response_book)['title: '], book_number)
-        image_downloaded = parse_book_page(response_book)
+        download_txt(parse_book_page(book_response)['title: '], book_number)
+        image_downloaded = parse_book_page(book_response)
         download_image(image_downloaded['image_url: '], book_number)
 
 
