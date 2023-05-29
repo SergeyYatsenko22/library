@@ -10,12 +10,6 @@ from time import sleep
 
 
 def parse_book_page(content):
-    try:
-        check_for_redirect(content)
-    except requests.exceptions.HTTPError:
-        print("Нет книги для скачивания на сайте", file=sys.stderr)
-        return
-
     soup = BeautifulSoup(content.text, 'lxml')
     image = soup.find(class_='bookimage').find('img')['src']
     title_tag = soup.find('h1')
@@ -53,6 +47,12 @@ def download_txt(title, id=1, folder='books/'):
     book_downloading_response = requests.get(url_book_download, params=payload)
     book_downloading_response.raise_for_status()
 
+    try:
+        check_for_redirect(book_downloading_response)
+    except requests.exceptions.HTTPError:
+        print("Нет книги для скачивания на сайте", file=sys.stderr)
+        return True
+
     file_name = f'{id}. {sanitize_filename(title)}.txt'
     with open(os.path.join(folder, file_name), 'wb') as file:
         file.write(book_downloading_response.content)
@@ -68,7 +68,7 @@ def main():
     parser.add_argument('-s', '--start_id', help='Начальный номер книги на сайте',
                         default='1', type=int)
     parser.add_argument('-e', '--end_id', help='Конечный номер книги на сайте',
-                        default='5', type=int)
+                        default='11', type=int)
     args = parser.parse_args()
 
     Path('books').mkdir(parents=True, exist_ok=True)
@@ -80,14 +80,12 @@ def main():
 
         while True:
             try:
-                book_response = requests.get(f'{book_url}{book_number}/', allow_redirects=False)
+                book_response = requests.get(f'{book_url}{book_number}/')
                 book_response.raise_for_status()
                 break
             except requests.exceptions.ConnectionError:
                 sleep(5)
                 print("Ошибка соединения", file=sys.stderr)
-
-        book_response = requests.get(f'{book_url}{book_number}/')
 
         try:
             book_response.raise_for_status()
@@ -98,12 +96,12 @@ def main():
         try:
             check_for_redirect(book_response)
         except requests.exceptions.HTTPError:
-            print("Нет книги для скачивания на сайте", file=sys.stderr)
+            print("Нет книги на сайте", file=sys.stderr)
             continue
 
-        if not parse_book_page(book_response):
+        parse_book_page(book_response)
+        if download_txt(parse_book_page(book_response)['title: '], book_number):
             continue
-        download_txt(parse_book_page(book_response)['title: '], book_number)
         image_downloaded = parse_book_page(book_response)
         download_image(image_downloaded['image_url: '], book_number)
 
