@@ -93,11 +93,10 @@ def main():
             print("Нет книги на сайте", file=sys.stderr)
             continue
 
-        parse_book_page(book_response)
-        if download_txt(parse_book_page(book_response)['title: '], book_number):
+        parsed_book = parse_book_page(book_response)
+        if download_txt(parsed_book['title: '], book_number):
             continue
-        image_downloaded = parse_book_page(book_response)
-        download_image(image_downloaded['image_url: '], book_number)
+        download_image(parsed_book['image_url: '], book_number)
 
 
 if __name__ == '__main__':
