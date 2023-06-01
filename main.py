@@ -15,7 +15,8 @@ def parse_book_page(content):
     title_tag = soup.find('h1')
     title = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[0]
     author = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[1]
-    genres = [genre.text for genre in soup.find('span', class_='d_book').find_all('a')]
+    genres = [genre.text for genre in soup.find('span', class_='d_book')
+              .find_all('a')]
 
     comments_parsed = soup.find_all(class_='texts')
 
@@ -59,13 +60,16 @@ def download_txt(title, id=1, folder='books/'):
 
 
 def check_for_redirect(response):
-    if response.history: raise requests.exceptions.HTTPError
+    if response.history:
+        raise requests.exceptions.HTTPError
     pass
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Книги в каком диапазоне надо скачать')
-    parser.add_argument('-s', '--start_id', help='Начальный номер книги на сайте',
+    parser = argparse.ArgumentParser(description='Книги в каком диапазоне'
+                                                 ' надо скачать')
+    parser.add_argument('-s', '--start_id',
+                        help='Начальный номер книги на сайте',
                         default='1', type=int)
     parser.add_argument('-e', '--end_id', help='Конечный номер книги на сайте',
                         default='11', type=int)
