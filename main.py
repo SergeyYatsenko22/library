@@ -62,7 +62,6 @@ def download_txt(title, id=1, folder='books/'):
 def check_for_redirect(response):
     if response.history:
         raise requests.exceptions.HTTPError
-    pass
 
 
 def main():
