@@ -86,6 +86,8 @@ def main():
             except requests.exceptions.ConnectionError:
                 sleep(5)
                 print("Ошибка соединения", file=sys.stderr)
+            except requests.exceptions.HTTPError:
+                print("Нет книги на сайте", file=sys.stderr)
 
         try:
             check_for_redirect(book_response)
