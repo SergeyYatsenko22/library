@@ -16,7 +16,7 @@ def parse_book_page(content):
     title = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[0]
     author = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[1]
     genres = [genre.text for genre in soup.find('span', class_='d_book')
-              .find_all('a')]
+    .find_all('a')]
 
     comments_parsed = soup.find_all(class_='texts')
 
@@ -34,7 +34,7 @@ def parse_book_page(content):
 
 
 def download_image(image, id=1, folder='images/'):
-    response = requests.get(urljoin('https://tululu.org/', image))
+    response = requests.get(urljoin(f'https://tululu.org/b{id}/', image))
     response.raise_for_status()
     file_name = f'{id}.jpg'
     with open(os.path.join(folder, file_name), 'wb') as file:
@@ -43,9 +43,9 @@ def download_image(image, id=1, folder='images/'):
 
 def download_txt(title, id=1, folder='books/'):
     payload = {'id': id}
-    url_book_download = 'https://tululu.org/txt.php'
+    downloaded_book_url = 'https://tululu.org/txt.php'
 
-    book_downloading_response = requests.get(url_book_download, params=payload)
+    book_downloading_response = requests.get(downloaded_book_url, params=payload)
     book_downloading_response.raise_for_status()
 
     try:
