@@ -16,7 +16,7 @@ def parse_book_page(content):
     title = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[0]
     author = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[1]
     genres = [genre.text for genre in soup.find('span', class_='d_book')
-    .find_all('a')]
+              .find_all('a')]
 
     comments_parsed = soup.find_all(class_='texts')
 
@@ -45,14 +45,10 @@ def download_txt(title, id=1, folder='books/'):
     payload = {'id': id}
     downloaded_book_url = 'https://tululu.org/txt.php'
 
-    book_downloading_response = requests.get(downloaded_book_url, params=payload)
+    book_downloading_response = requests.get(downloaded_book_url,
+                                             params=payload)
     book_downloading_response.raise_for_status()
-
-    try:
-        check_for_redirect(book_downloading_response)
-    except requests.exceptions.HTTPError:
-        print("Нет книги для скачивания на сайте", file=sys.stderr)
-        return True
+    check_for_redirect(book_downloading_response)
 
     file_name = f'{id}. {sanitize_filename(title)}.txt'
     with open(os.path.join(folder, file_name), 'wb') as file:
@@ -99,8 +95,12 @@ def main():
             continue
 
         parsed_book = parse_book_page(book_response)
-        if download_txt(parsed_book['title: '], book_number):
+        try:
+            download_txt(parsed_book['title: '], book_number)
+        except requests.exceptions.HTTPError:
+            print("Нет книги для скачивания на сайте", file=sys.stderr)
             continue
+
         download_image(parsed_book['image_url: '], book_number)
 
 
