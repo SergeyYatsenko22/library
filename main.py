@@ -89,6 +89,7 @@ def main():
             except requests.exceptions.HTTPError:
                 print("Нет книги на сайте", file=sys.stderr)
                 book_number += 1
+                continue
 
         parsed_book = parse_book_page(book_response)
         try:
