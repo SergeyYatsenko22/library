@@ -16,7 +16,7 @@ def parse_book_page(content):
     title = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[0]
     author = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[1]
     genres = [genre.text for genre in soup.find('span', class_='d_book')
-             .find_all('a')]
+              .find_all('a')]
 
     comments_parsed = soup.find_all(class_='texts')
 
@@ -34,8 +34,19 @@ def parse_book_page(content):
 
 
 def download_image(image, id=1, folder='images/'):
-    response = requests.get(urljoin(f'https://tululu.org/b{id}/', image))
-    response.raise_for_status()
+    while True:
+        try:
+            response = requests.get(urljoin(f'https://tululu.org/b{id}/',
+                                            image))
+            response.raise_for_status()
+            break
+        except requests.exceptions.ConnectionError:
+            sleep(5)
+            print("Ошибка соединения", file=sys.stderr)
+        except requests.exceptions.HTTPError:
+            print("Нет книги на сайте", file=sys.stderr)
+            break
+
     file_name = f'{id}.jpg'
     with open(os.path.join(folder, file_name), 'wb') as file:
         file.write(response.content)
