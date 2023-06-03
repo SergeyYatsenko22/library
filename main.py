@@ -81,18 +81,14 @@ def main():
             try:
                 book_response = requests.get(f'{book_url}{book_number}/')
                 book_response.raise_for_status()
+                check_for_redirect(book_response)
                 break
             except requests.exceptions.ConnectionError:
                 sleep(5)
                 print("Ошибка соединения", file=sys.stderr)
             except requests.exceptions.HTTPError:
                 print("Нет книги на сайте", file=sys.stderr)
-
-        try:
-            check_for_redirect(book_response)
-        except requests.exceptions.HTTPError:
-            print("Нет книги на сайте", file=sys.stderr)
-            continue
+                book_number += 1
 
         parsed_book = parse_book_page(book_response)
         try:
