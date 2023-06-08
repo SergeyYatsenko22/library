@@ -105,8 +105,12 @@ def main():
                 print("Ошибка соединения", file=sys.stderr)
             except requests.exceptions.HTTPError:
                 print("Нет книги на сайте", file=sys.stderr)
-                book_number += 1
-                continue
+                if book_number < (args.end_id + 1):
+                    book_number += 1
+                    continue
+                else:
+                    break
+
 
         parsed_book = parse_book_page(book_response)
         try:
