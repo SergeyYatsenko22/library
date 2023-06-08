@@ -34,18 +34,9 @@ def parse_book_page(content):
 
 
 def download_image(image, id=1, folder='images/'):
-    while True:
-        try:
-            response = requests.get(urljoin(f'https://tululu.org/b{id}/',
-                                            image))
-            response.raise_for_status()
-            break
-        except requests.exceptions.ConnectionError:
-            sleep(5)
-            print("Ошибка соединения", file=sys.stderr)
-        except requests.exceptions.HTTPError:
-            print("Нет книги на сайте", file=sys.stderr)
-            break
+    response = requests.get(urljoin(f'https://tululu.org/b{id}/',
+                                    image))
+    response.raise_for_status()
 
     file_name = f'{id}.jpg'
     with open(os.path.join(folder, file_name), 'wb') as file:
@@ -56,20 +47,15 @@ def download_txt(title, id=1, folder='books/'):
     payload = {'id': id}
     downloaded_book_url = 'https://tululu.org/txt.php'
 
-    while True:
-        try:
-            book_downloading_response = requests.get(downloaded_book_url,
-                                                     params=payload)
-            book_downloading_response.raise_for_status()
-            check_for_redirect(book_downloading_response)
-            break
-        except requests.exceptions.ConnectionError:
-            sleep(5)
-            print("Ошибка соединения", file=sys.stderr)
+    book_downloading_response = requests.get(downloaded_book_url,
+                                             params=payload)
+    book_downloading_response.raise_for_status()
+    check_for_redirect(book_downloading_response)
 
     file_name = f'{id}. {sanitize_filename(title)}.txt'
     with open(os.path.join(folder, file_name), 'wb') as file:
         file.write(book_downloading_response.content)
+    return True
 
 
 def check_for_redirect(response):
@@ -111,15 +97,19 @@ def main():
                 else:
                     break
 
-
         parsed_book = parse_book_page(book_response)
-        try:
-            download_txt(parsed_book['title: '], book_number)
-        except requests.exceptions.HTTPError:
-            print("Нет книги для скачивания на сайте", file=sys.stderr)
-            continue
 
-        download_image(parsed_book['image_url: '], book_number)
+        while True:
+            try:
+                download_txt(parsed_book['title: '], book_number)
+                download_image(parsed_book['image_url: '], book_number)
+                break
+            except requests.exceptions.ConnectionError:
+                sleep(5)
+                print("Ошибка соединения", file=sys.stderr)
+            except requests.exceptions.HTTPError:
+                print("Нет книги для скачивания на сайте", file=sys.stderr)
+                break
 
 
 if __name__ == '__main__':
