@@ -34,7 +34,7 @@ def parse_book_page(content):
 
 
 def download_image(image, id=1, folder='images/'):
-    response = requests.get(urljoin(f'https://tululu.org/b{id}/',
+    response = requests.get(urljoin('https://tululu.org/',
                                     image))
     response.raise_for_status()
 
