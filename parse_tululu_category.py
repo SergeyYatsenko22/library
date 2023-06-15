@@ -17,16 +17,24 @@ def check_for_redirect(response):
 
 def parse_book_page(content):
     soup = BeautifulSoup(content.text, 'lxml')
-    image = soup.find(class_='bookimage').find('img')['src']
-    title_tag = soup.find('h1')
+    selector ='.bookimage img'
+    image = soup.select(selector)[0]['src']
+
+    selector_1 = 'h1'
+    title_tag = soup.select_one(selector_1)
+
     title = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[0]
     author = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[1]
-    genres = [genre.text for genre in soup.find('span', class_='d_book')
-              .find_all('a')]
 
-    comments_parsed = soup.find_all(class_='texts')
+    selector_3 = 'span.d_book a'
+    genres = [genre.text for genre in soup.select(selector_3)]
+
+
+    selector_4 = '.texts'
+    comments_parsed = soup.select(selector_4)
 
     comments = [comment.text.split(')')[1] for comment in comments_parsed]
+
 
     book = {
         'title: ': title,
@@ -61,8 +69,6 @@ def download_image(image, id, folder='images/'):
     response = requests.get(urljoin('https://tululu.org/', image))
     response.raise_for_status()
 
-    # file_number = ''.join([num for num in filter(lambda num: num.isnumeric(), book_url)])
-    # print(image)
     file_name = f'{id}.jpg'
     with open(os.path.join(folder, file_name), 'wb') as file:
         file.write(response.content)
@@ -70,11 +76,12 @@ def download_image(image, id, folder='images/'):
 
 def get_books_urls(content):
     soup = BeautifulSoup(content.text, 'lxml')
-    books = soup.find_all(class_='d_book')
+    selector_5 = '.d_book'
+    books = soup.select(selector_5)
     books_urls=[]
     for book in books:
-        book_id = book.find('a')['href']
-        # print(urljoin('https://tululu.org/', book_id))
+        selector_6 = 'a'
+        book_id = book.select(selector_6)[0]['href']
         books_urls.append(urljoin('https://tululu.org/', book_id))
     return books_urls
 
@@ -86,18 +93,33 @@ def main():
 
     books=[]
 
-    for page in range (1, 5):
-        page_response = requests.get(f'https://tululu.org/l55/{page}')
-        page_response.raise_for_status()
-        get_books_urls(page_response)
+    for page in range (1, 2):
+        while True:
+            try:
+                page_response = requests.get(f'https://tululu.org/l55/{page}')
+                page_response.raise_for_status()
+                check_for_redirect(page_response)
+                get_books_urls(page_response)
+                break
+            except requests.exceptions.ConnectionError:
+                sleep(5)
+                print("Ошибка соединения", file=sys.stderr)
+            except requests.exceptions.HTTPError:
+                print("Нет книги на сайте", file=sys.stderr)
+                break
+
+        # page_response = requests.get(f'https://tululu.org/l55/{page}')
+        # page_response.raise_for_status()
+        # get_books_urls(page_response)
 
         for book_url in get_books_urls(page_response):
-            # print(book_url)
             while True:
                 try:
                     book_response = requests.get(book_url)
                     book_response.raise_for_status()
                     check_for_redirect(book_response)
+                    parsed_book = parse_book_page(book_response)
+                    books.append(parsed_book)
                     break
                 except requests.exceptions.ConnectionError:
                     sleep(5)
@@ -106,11 +128,9 @@ def main():
                     print("Нет книги на сайте", file=sys.stderr)
                     break
 
-            # print(book_response)
-            parsed_book = parse_book_page(book_response)
-            books.append(parsed_book)
+            # parsed_book = parse_book_page(book_response)
+            # books.append(parsed_book)
 
-            # print(parsed_book['image_url: '])
             while True:
                 try:
                     book_id = ''.join([num for num in filter(lambda num: num.isnumeric(), book_url)])
