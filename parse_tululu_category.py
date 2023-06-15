@@ -35,7 +35,6 @@ def parse_book_page(content):
 
     comments = [comment.text.split(')')[1] for comment in comments_parsed]
 
-
     book = {
         'title: ': title,
         'author: ': author,
@@ -88,12 +87,22 @@ def get_books_urls(content):
 
 def main():
 
+    parser = argparse.ArgumentParser(description='Книги с каких страниц'
+                                                 ' надо скачать')
+    parser.add_argument('-s', '--start_page',
+                        help='Начальная страница',
+                        default=1, type=int)
+    parser.add_argument('-e', '--end_page', help='Конечная страница',
+                        default=6, type=int)
+    args = parser.parse_args()
+
     Path('books').mkdir(parents=True, exist_ok=True)
     Path('images').mkdir(parents=True, exist_ok=True)
+    Path('json').mkdir(parents=True, exist_ok=True)
 
-    books=[]
+    books = []
 
-    for page in range (1, 2):
+    for page in range(args.start_page, args.end_page):
         while True:
             try:
                 page_response = requests.get(f'https://tululu.org/l55/{page}')
@@ -107,10 +116,6 @@ def main():
             except requests.exceptions.HTTPError:
                 print("Нет книги на сайте", file=sys.stderr)
                 break
-
-        # page_response = requests.get(f'https://tululu.org/l55/{page}')
-        # page_response.raise_for_status()
-        # get_books_urls(page_response)
 
         for book_url in get_books_urls(page_response):
             while True:
@@ -128,9 +133,6 @@ def main():
                     print("Нет книги на сайте", file=sys.stderr)
                     break
 
-            # parsed_book = parse_book_page(book_response)
-            # books.append(parsed_book)
-
             while True:
                 try:
                     book_id = ''.join([num for num in filter(lambda num: num.isnumeric(), book_url)])
@@ -144,7 +146,7 @@ def main():
                     print("Нет книги для скачивания на сайте", file=sys.stderr)
                     break
 
-    with open("books_json", "w", encoding="UTF8") as json_file:
+    with open("json/books_json", "w", encoding="UTF8") as json_file:
         json.dump(books, json_file, ensure_ascii=False)
 
 if __name__ == '__main__':
