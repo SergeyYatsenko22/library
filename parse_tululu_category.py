@@ -94,6 +94,15 @@ def main():
                         default=1, type=int)
     parser.add_argument('-e', '--end_page', help='Конечная страница',
                         default=6, type=int)
+
+    a = parser.parse_args().end_page
+    while True:
+        if a < parser.parse_args().start_page:
+            a += 1
+            print(a)
+        else:
+            break
+
     args = parser.parse_args()
 
     Path('books').mkdir(parents=True, exist_ok=True)
@@ -101,8 +110,12 @@ def main():
     Path('json').mkdir(parents=True, exist_ok=True)
 
     books = []
-
-    for page in range(args.start_page, args.end_page):
+    print(type(args.start_page))
+    print(type(a))
+    for page in range(args.start_page, a+1):
+        print(args.start_page)
+        print(a)
+        # break
         while True:
             try:
                 page_response = requests.get(f'https://tululu.org/l55/{page}')
