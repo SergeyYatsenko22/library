@@ -7,18 +7,30 @@ from urllib.parse import urljoin
 import argparse
 import sys
 from time import sleep
+import json
+
+
+def check_for_redirect(response):
+    if response.history:
+        raise requests.exceptions.HTTPError
 
 
 def parse_book_page(content):
     soup = BeautifulSoup(content.text, 'lxml')
-    image = soup.find(class_='bookimage').find('img')['src']
-    title_tag = soup.find('h1')
+    selector = '.bookimage img'
+    image = soup.select(selector)[0]['src']
+
+    selector_1 = 'h1'
+    title_tag = soup.select_one(selector_1)
+
     title = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[0]
     author = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[1]
-    genres = [genre.text for genre in soup.find('span', class_='d_book')
-              .find_all('a')]
 
-    comments_parsed = soup.find_all(class_='texts')
+    selector_3 = 'span.d_book a'
+    genres = [genre.text for genre in soup.select(selector_3)]
+
+    selector_4 = '.texts'
+    comments_parsed = soup.select(selector_4)
 
     comments = [comment.text.split(')')[1] for comment in comments_parsed]
 
@@ -33,17 +45,7 @@ def parse_book_page(content):
     return book
 
 
-def download_image(image, id=1, folder='images/'):
-    response = requests.get(urljoin('https://tululu.org/',
-                                    image))
-    response.raise_for_status()
-
-    file_name = f'{id}.jpg'
-    with open(os.path.join(folder, file_name), 'wb') as file:
-        file.write(response.content)
-
-
-def download_txt(title, id=1, folder='books/'):
+def download_txt(title, id, folder):
     payload = {'id': id}
     downloaded_book_url = 'https://tululu.org/txt.php'
 
@@ -52,64 +54,118 @@ def download_txt(title, id=1, folder='books/'):
     book_downloading_response.raise_for_status()
     check_for_redirect(book_downloading_response)
 
-    file_name = f'{id}. {sanitize_filename(title)}.txt'
+    file_name = f'{id}-{sanitize_filename(title)}.txt'
     with open(os.path.join(folder, file_name), 'wb') as file:
         file.write(book_downloading_response.content)
-    return True
 
 
-def check_for_redirect(response):
-    if response.history:
-        raise requests.exceptions.HTTPError
+def download_image(image, id, folder):
+    if image == '/images/nopic.gif':
+        return
+
+    response = requests.get(urljoin('https://tululu.org/', image))
+    response.raise_for_status()
+
+    file_name = f'{id}.jpg'
+    with open(os.path.join(folder, file_name), 'wb') as file:
+        file.write(response.content)
+
+
+def get_books_urls(content):
+    soup = BeautifulSoup(content.text, 'lxml')
+    selector_5 = '.d_book'
+    books = soup.select(selector_5)
+    books_urls = []
+    for book in books:
+        selector_6 = 'a'
+        book_id = book.select(selector_6)[0]['href']
+        books_urls.append(urljoin('https://tululu.org/', book_id))
+    return books_urls
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Книги в каком диапазоне'
-                                                 ' надо скачать')
-    parser.add_argument('-s', '--start_id',
-                        help='Начальный номер книги на сайте',
-                        default='1', type=int)
-    parser.add_argument('-e', '--end_id', help='Конечный номер книги на сайте',
-                        default='11', type=int)
+    parser = argparse.ArgumentParser(description=
+                                     'Управление параметрами парсинга')
+    parser.add_argument('-s', '--start_page',
+                        help='Начальная страница',
+                        default=1, type=int)
+    parser.add_argument('-e', '--end_page', help='Конечная страница',
+                        default=6, type=int)
+
+    parser.add_argument('-df', '--dest_folder',
+                        help='Папка для скаченной информации',
+                        default='folder')
+
+    parser.add_argument('-txt', '--skip_txt', action='store_true',
+                        help='Отмена скачивания текста книг')
+
+    parser.add_argument('-img', '--skip_img', action='store_true',
+                        help='Отмена скачивания обложек книг')
+
+    end_page_corrected = parser.parse_args().end_page
+
+    while end_page_corrected < parser.parse_args().start_page:
+        end_page_corrected += 1
+
     args = parser.parse_args()
 
-    Path('books').mkdir(parents=True, exist_ok=True)
-    Path('images').mkdir(parents=True, exist_ok=True)
+    path = 'folder' if args.dest_folder == 'folder' else f'.{args.dest_folder}'
 
-    book_url = 'https://tululu.org/b'
+    Path(path).mkdir(parents=True, exist_ok=True)
 
-    for book_number in range(args.start_id, args.end_id + 1):
-
+    books = []
+    for page in range(args.start_page, end_page_corrected + 1):
         while True:
             try:
-                book_response = requests.get(f'{book_url}{book_number}/')
-                book_response.raise_for_status()
-                check_for_redirect(book_response)
+                page_response = requests.get(f'https://tululu.org/l55/{page}')
+                page_response.raise_for_status()
+                check_for_redirect(page_response)
+                get_books_urls(page_response)
                 break
             except requests.exceptions.ConnectionError:
                 sleep(5)
-                print("Ошибка соединения", file=sys.stderr)
+                print('Ошибка соединения', file=sys.stderr)
             except requests.exceptions.HTTPError:
-                print("Нет книги на сайте", file=sys.stderr)
-                if book_number < (args.end_id + 1):
-                    book_number += 1
-                    continue
-                else:
+                print('Нет страницы на сайте', file=sys.stderr)
+                break
+
+        for book_url in get_books_urls(page_response):
+            while True:
+                try:
+                    book_response = requests.get(book_url)
+                    book_response.raise_for_status()
+                    check_for_redirect(book_response)
+                    parsed_book = parse_book_page(book_response)
+                    books.append(parsed_book)
+                    break
+                except requests.exceptions.ConnectionError:
+                    sleep(5)
+                    print('Ошибка соединения', file=sys.stderr)
+                except requests.exceptions.HTTPError:
+                    print('Нет книги на сайте', file=sys.stderr)
                     break
 
-        parsed_book = parse_book_page(book_response)
+            while True:
+                try:
+                    book_id = ''.join(
+                        [num for num in filter(lambda num:
+                                               num.isnumeric(), book_url)]
+                    )
+                    if not args.skip_txt:
+                        download_txt(parsed_book['title: '], book_id, path)
+                    if not args.skip_img:
+                        download_image(parsed_book['image_url: '],
+                                       book_id, path)
+                    break
+                except requests.exceptions.ConnectionError:
+                    sleep(5)
+                    print('Ошибка соединения', file=sys.stderr)
+                except requests.exceptions.HTTPError:
+                    print('Нет книги для скачивания на сайте', file=sys.stderr)
+                    break
 
-        while True:
-            try:
-                download_txt(parsed_book['title: '], book_number)
-                download_image(parsed_book['image_url: '], book_number)
-                break
-            except requests.exceptions.ConnectionError:
-                sleep(5)
-                print("Ошибка соединения", file=sys.stderr)
-            except requests.exceptions.HTTPError:
-                print("Нет книги для скачивания на сайте", file=sys.stderr)
-                break
+    with open(f'{path}/books_json', 'w', encoding='UTF8') as json_file:
+        json.dump(books, json_file, ensure_ascii=False)
 
 
 if __name__ == '__main__':
