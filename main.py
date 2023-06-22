@@ -102,14 +102,17 @@ def main():
     parser.add_argument('-img', '--skip_img', action='store_true',
                         help='Отмена скачивания обложек книг')
 
+    args = parser.parse_args()
+
     end_page_corrected = parser.parse_args().end_page
+
 
     while end_page_corrected < parser.parse_args().start_page:
         end_page_corrected += 1
 
     args = parser.parse_args()
 
-    path = 'folder' if args.dest_folder == 'folder' else f'.{args.dest_folder}'
+    path = args.dest_folder
 
     Path(path).mkdir(parents=True, exist_ok=True)
 
