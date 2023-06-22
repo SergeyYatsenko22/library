@@ -17,20 +17,20 @@ def check_for_redirect(response):
 
 def parse_book_page(content):
     soup = BeautifulSoup(content.text, 'lxml')
-    selector = '.bookimage img'
-    image = soup.select(selector)[0]['src']
+    selector_image = '.bookimage img'
+    image = soup.select(selector_image)[0]['src']
 
-    selector_1 = 'h1'
-    title_tag = soup.select_one(selector_1)
+    selector_title = 'h1'
+    title_tag = soup.select_one(selector_title)
 
     title = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[0]
     author = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[1]
 
-    selector_3 = 'span.d_book a'
-    genres = [genre.text for genre in soup.select(selector_3)]
+    selector_genres = 'span.d_book a'
+    genres = [genre.text for genre in soup.select(selector_genres)]
 
-    selector_4 = '.texts'
-    comments_parsed = soup.select(selector_4)
+    selector_comments = '.texts'
+    comments_parsed = soup.select(selector_comments)
 
     comments = [comment.text.split(')')[1] for comment in comments_parsed]
 
@@ -73,12 +73,12 @@ def download_image(image, id, folder):
 
 def get_books_urls(content):
     soup = BeautifulSoup(content.text, 'lxml')
-    selector_5 = '.d_book'
-    books = soup.select(selector_5)
+    selector_book_urls = '.d_book'
+    books = soup.select(selector_book_urls)
     books_urls = []
     for book in books:
-        selector_6 = 'a'
-        book_id = book.select(selector_6)[0]['href']
+        selector_book_id = 'a'
+        book_id = book.select(selector_book_id)[0]['href']
         books_urls.append(urljoin('https://tululu.org/', book_id))
     return books_urls
 
@@ -108,7 +108,6 @@ def main():
 
     while corrected_end_page < args.start_page:
         corrected_end_page += 1
-
 
     path = args.dest_folder
 
