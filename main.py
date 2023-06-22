@@ -137,16 +137,6 @@ def main():
                     check_for_redirect(book_response)
                     parsed_book = parse_book_page(book_response)
                     books.append(parsed_book)
-                    break
-                except requests.exceptions.ConnectionError:
-                    sleep(5)
-                    print('Ошибка соединения', file=sys.stderr)
-                except requests.exceptions.HTTPError:
-                    print('Нет книги на сайте', file=sys.stderr)
-                    break
-
-            while True:
-                try:
                     book_id = ''.join(
                         [num for num in filter(lambda num:
                                                num.isnumeric(), book_url)]
@@ -161,7 +151,7 @@ def main():
                     sleep(5)
                     print('Ошибка соединения', file=sys.stderr)
                 except requests.exceptions.HTTPError:
-                    print('Нет книги для скачивания на сайте', file=sys.stderr)
+                    print('Нет книги на сайте', file=sys.stderr)
                     break
 
     with open(f'{path}/books_json', 'w', encoding='UTF8') as json_file:
