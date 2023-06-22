@@ -104,13 +104,11 @@ def main():
 
     args = parser.parse_args()
 
-    end_page_corrected = parser.parse_args().end_page
+    end_page_corrected = args.end_page
 
-
-    while end_page_corrected < parser.parse_args().start_page:
+    while end_page_corrected < args.start_page:
         end_page_corrected += 1
 
-    args = parser.parse_args()
 
     path = args.dest_folder
 
