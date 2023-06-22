@@ -120,7 +120,7 @@ def main():
                 page_response = requests.get(f'https://tululu.org/l55/{page}')
                 page_response.raise_for_status()
                 check_for_redirect(page_response)
-                get_books_urls(page_response)
+                books_urls = get_books_urls(page_response)
                 break
             except requests.exceptions.ConnectionError:
                 sleep(5)
@@ -129,7 +129,7 @@ def main():
                 print('Нет страницы на сайте', file=sys.stderr)
                 break
 
-        for book_url in get_books_urls(page_response):
+        for book_url in books_urls:
             while True:
                 try:
                     book_response = requests.get(book_url)
