@@ -104,10 +104,10 @@ def main():
 
     args = parser.parse_args()
 
-    end_page_corrected = args.end_page
+    corrected_end_page = args.end_page
 
-    while end_page_corrected < args.start_page:
-        end_page_corrected += 1
+    while corrected_end_page < args.start_page:
+        corrected_end_page += 1
 
 
     path = args.dest_folder
@@ -115,7 +115,7 @@ def main():
     Path(path).mkdir(parents=True, exist_ok=True)
 
     books = []
-    for page in range(args.start_page, end_page_corrected + 1):
+    for page in range(args.start_page, corrected_end_page + 1):
         while True:
             try:
                 page_response = requests.get(f'https://tululu.org/l55/{page}')
