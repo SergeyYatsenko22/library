@@ -45,8 +45,8 @@ def parse_book_page(content):
     return book
 
 
-def download_txt(title, id, folder):
-    payload = {'id': id}
+def download_txt(title, book_id, folder):
+    payload = {'book_id': book_id}
     downloaded_book_url = 'https://tululu.org/txt.php'
 
     book_downloading_response = requests.get(downloaded_book_url,
@@ -54,17 +54,17 @@ def download_txt(title, id, folder):
     book_downloading_response.raise_for_status()
     check_for_redirect(book_downloading_response)
 
-    file_name = f'{id}-{sanitize_filename(title)}.txt'
+    file_name = f'{book_id}-{sanitize_filename(title)}.txt'
     with open(os.path.join(folder, file_name), 'wb') as file:
         file.write(book_downloading_response.content)
 
 
-def download_image(image, id, folder):
+def download_image(image, book_id, folder):
 
     response = requests.get(urljoin('https://tululu.org/', image))
     response.raise_for_status()
 
-    file_name = f'{id}.jpg'
+    file_name = f'{book_id}.jpg'
     with open(os.path.join(folder, file_name), 'wb') as file:
         file.write(response.content)
 
