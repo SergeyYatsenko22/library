@@ -60,8 +60,6 @@ def download_txt(title, id, folder):
 
 
 def download_image(image, id, folder):
-    # if image == '/images/nopic.gif':
-    #     return
 
     response = requests.get(urljoin('https://tululu.org/', image))
     response.raise_for_status()
