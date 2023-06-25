@@ -60,8 +60,8 @@ def download_txt(title, id, folder):
 
 
 def download_image(image, id, folder):
-    if image == '/images/nopic.gif':
-        return
+    # if image == '/images/nopic.gif':
+    #     return
 
     response = requests.get(urljoin('https://tululu.org/', image))
     response.raise_for_status()
@@ -141,7 +141,8 @@ def main():
                     )
                     if not args.skip_txt:
                         download_txt(parsed_book['title: '], book_id, path)
-                    if not args.skip_img:
+                    if not args.skip_img or parsed_book['image_url: '] \
+                            != '/images/nopic.gif':
                         download_image(parsed_book['image_url: '],
                                        book_id, path)
                     break
