@@ -141,8 +141,8 @@ def main():
                     )
                     if not args.skip_txt:
                         download_txt(parsed_book['title: '], book_id, path)
-                    if not args.skip_img or parsed_book['image_url: '] \
-                            != '/images/nopic.gif':
+
+                    if not args.skip_img and parsed_book['image_url: '] != '/images/nopic.gif':
                         download_image(parsed_book['image_url: '],
                                        book_id, path)
                     break
