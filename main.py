@@ -45,7 +45,7 @@ def parse_book_page(content):
 
 
 def download_txt(title, book_id, folder):
-    payload = {'book_id': book_id}
+    payload = {'id': book_id}
     downloaded_book_url = 'https://tululu.org/txt.php'
 
     book_downloading_response = requests.get(downloaded_book_url,
@@ -119,7 +119,6 @@ def main():
                 page_response.raise_for_status()
                 check_for_redirect(page_response)
                 books_urls = get_books_urls(page_response)
-                print(books_urls)
                 break
             except requests.exceptions.ConnectionError:
                 sleep(5)
@@ -128,34 +127,34 @@ def main():
                 print('Нет страницы на сайте', file=sys.stderr)
                 break
 
-    #     for book_url in books_urls:
-    #         while True:
-    #             try:
-    #                 book_response = requests.get(book_url)
-    #                 book_response.raise_for_status()
-    #                 check_for_redirect(book_response)
-    #                 parsed_book = parse_book_page(book_response)
-    #                 books.append(parsed_book)
-    #                 book_id = ''.join(
-    #                     [num for num in filter(lambda num:
-    #                                            num.isnumeric(), book_url)]
-    #                 )
-    #                 if not args.skip_txt:
-    #                     download_txt(parsed_book['title: '], book_id, path)
-    #                 if not args.skip_img or parsed_book['image_url: '] \
-    #                         != '/images/nopic.gif':
-    #                     download_image(parsed_book['image_url: '],
-    #                                    book_id, path)
-    #                 break
-    #             except requests.exceptions.ConnectionError:
-    #                 sleep(5)
-    #                 print('Ошибка соединения', file=sys.stderr)
-    #             except requests.exceptions.HTTPError:
-    #                 print('Нет книги на сайте', file=sys.stderr)
-    #                 break
-    #
-    # with open(f'{path}/books_json', 'w', encoding='UTF8') as json_file:
-    #     json.dump(books, json_file, ensure_ascii=False)
+        for book_url in books_urls:
+            while True:
+                try:
+                    book_response = requests.get(book_url)
+                    book_response.raise_for_status()
+                    check_for_redirect(book_response)
+                    parsed_book = parse_book_page(book_response)
+                    books.append(parsed_book)
+                    book_id = ''.join(
+                        [num for num in filter(lambda num:
+                                               num.isnumeric(), book_url)]
+                    )
+                    if not args.skip_txt:
+                        download_txt(parsed_book['title: '], book_id, path)
+                    if not args.skip_img or parsed_book['image_url: '] \
+                            != '/images/nopic.gif':
+                        download_image(parsed_book['image_url: '],
+                                       book_id, path)
+                    break
+                except requests.exceptions.ConnectionError:
+                    sleep(5)
+                    print('Ошибка соединения', file=sys.stderr)
+                except requests.exceptions.HTTPError:
+                    print('Нет книги на сайте', file=sys.stderr)
+                    break
+
+    with open(f'{path}/books_json', 'w', encoding='UTF8') as json_file:
+        json.dump(books, json_file, ensure_ascii=False)
 
 
 if __name__ == '__main__':
