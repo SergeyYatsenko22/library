@@ -41,7 +41,6 @@ def parse_book_page(content):
         'comments: ': comments,
         'image_url: ': image
     }
-
     return book
 
 
@@ -88,7 +87,7 @@ def main():
                         help='Начальная страница',
                         default=1, type=int)
     parser.add_argument('-e', '--end_page', help='Конечная страница',
-                        default=6, type=int)
+                        default=1, type=int)
 
     parser.add_argument('-df', '--dest_folder',
                         help='Папка для скаченной информации',
@@ -105,18 +104,22 @@ def main():
     if args.end_page < args.start_page:
         args.end_page = args.start_page
 
+
     path = args.dest_folder
 
     Path(path).mkdir(parents=True, exist_ok=True)
 
     books = []
-    for page in range(args.start_page, args.end_page + 1):
+
+    for page in range(args.start_page, args.end_page+1):
+
         while True:
             try:
                 page_response = requests.get(f'https://tululu.org/l55/{page}')
                 page_response.raise_for_status()
                 check_for_redirect(page_response)
                 books_urls = get_books_urls(page_response)
+                print(books_urls)
                 break
             except requests.exceptions.ConnectionError:
                 sleep(5)
@@ -125,34 +128,34 @@ def main():
                 print('Нет страницы на сайте', file=sys.stderr)
                 break
 
-        for book_url in books_urls:
-            while True:
-                try:
-                    book_response = requests.get(book_url)
-                    book_response.raise_for_status()
-                    check_for_redirect(book_response)
-                    parsed_book = parse_book_page(book_response)
-                    books.append(parsed_book)
-                    book_id = ''.join(
-                        [num for num in filter(lambda num:
-                                               num.isnumeric(), book_url)]
-                    )
-                    if not args.skip_txt:
-                        download_txt(parsed_book['title: '], book_id, path)
-                    if not args.skip_img or parsed_book['image_url: '] \
-                            != '/images/nopic.gif':
-                        download_image(parsed_book['image_url: '],
-                                       book_id, path)
-                    break
-                except requests.exceptions.ConnectionError:
-                    sleep(5)
-                    print('Ошибка соединения', file=sys.stderr)
-                except requests.exceptions.HTTPError:
-                    print('Нет книги на сайте', file=sys.stderr)
-                    break
-
-    with open(f'{path}/books_json', 'w', encoding='UTF8') as json_file:
-        json.dump(books, json_file, ensure_ascii=False)
+    #     for book_url in books_urls:
+    #         while True:
+    #             try:
+    #                 book_response = requests.get(book_url)
+    #                 book_response.raise_for_status()
+    #                 check_for_redirect(book_response)
+    #                 parsed_book = parse_book_page(book_response)
+    #                 books.append(parsed_book)
+    #                 book_id = ''.join(
+    #                     [num for num in filter(lambda num:
+    #                                            num.isnumeric(), book_url)]
+    #                 )
+    #                 if not args.skip_txt:
+    #                     download_txt(parsed_book['title: '], book_id, path)
+    #                 if not args.skip_img or parsed_book['image_url: '] \
+    #                         != '/images/nopic.gif':
+    #                     download_image(parsed_book['image_url: '],
+    #                                    book_id, path)
+    #                 break
+    #             except requests.exceptions.ConnectionError:
+    #                 sleep(5)
+    #                 print('Ошибка соединения', file=sys.stderr)
+    #             except requests.exceptions.HTTPError:
+    #                 print('Нет книги на сайте', file=sys.stderr)
+    #                 break
+    #
+    # with open(f'{path}/books_json', 'w', encoding='UTF8') as json_file:
+    #     json.dump(books, json_file, ensure_ascii=False)
 
 
 if __name__ == '__main__':
