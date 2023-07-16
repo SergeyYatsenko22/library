@@ -15,13 +15,18 @@ def check_for_redirect(response):
         raise requests.exceptions.HTTPError
 
 
-def parse_book_page(content):
+def parse_book_page(content, book_url):
     soup = BeautifulSoup(content.text, 'lxml')
     image_selector = '.bookimage img'
     image = soup.select(image_selector)[0]['src']
 
     title_selector = 'h1'
     title_tag = soup.select_one(title_selector)
+
+    book_id = ''.join(
+        [num for num in filter(lambda num:
+                               num.isnumeric(), book_url)]
+    )
 
     title = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[0]
     author = title_tag.text.strip().replace('\xa0 ', '').split(' :: ')[1]
@@ -35,6 +40,7 @@ def parse_book_page(content):
     comments = [comment.text.split(')')[1] for comment in comments_parsed]
 
     book = {
+        'id: ': book_id,
         'title: ': title,
         'author: ': author,
         'genre: ': genres,
@@ -44,7 +50,7 @@ def parse_book_page(content):
     return book
 
 
-def download_txt(title, book_id, folder):
+def download_txt(book_id, title, folder):
     payload = {'id': book_id}
     downloaded_book_url = 'https://tululu.org/txt.php'
 
@@ -58,7 +64,7 @@ def download_txt(title, book_id, folder):
         file.write(book_downloading_response.content)
 
 
-def download_image(image, book_id, folder):
+def download_image(book_id, image, folder):
 
     response = requests.get(urljoin('https://tululu.org/', image))
     response.raise_for_status()
@@ -133,18 +139,14 @@ def main():
                     book_response = requests.get(book_url)
                     book_response.raise_for_status()
                     check_for_redirect(book_response)
-                    parsed_book = parse_book_page(book_response)
+                    parsed_book = parse_book_page(book_response, book_url)
                     books.append(parsed_book)
-                    book_id = ''.join(
-                        [num for num in filter(lambda num:
-                                               num.isnumeric(), book_url)]
-                    )
-                    if not args.skip_txt:
-                        download_txt(parsed_book['title: '], book_id, path)
 
-                    if not args.skip_img and parsed_book['image_url: '] != '/images/nopic.gif':
-                        download_image(parsed_book['image_url: '],
-                                       book_id, path)
+                    if not args.skip_txt:
+                        download_txt(parsed_book['id: '], parsed_book['title: '], path)
+
+                    if not args.skip_img:
+                        download_image(parsed_book['id: '], parsed_book['image_url: '], path)
                     break
                 except requests.exceptions.ConnectionError:
                     sleep(5)
