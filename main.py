@@ -40,12 +40,13 @@ def parse_book_page(content, book_url):
     comments = [comment.text.split(')')[1] for comment in comments_parsed]
 
     book = {
-        'id: ': book_id,
-        'title: ': title,
-        'author: ': author,
-        'genre: ': genres,
-        'comments: ': comments,
-        'image_url: ': image
+        'id': book_id,
+        'title': title,
+        'author': author,
+        'genre': genres,
+        'comments': comments,
+        'image_url': image,
+        'image_id': f'{book_id}.jpg'
     }
     return book
 
@@ -143,10 +144,10 @@ def main():
                     books.append(parsed_book)
 
                     if not args.skip_txt:
-                        download_txt(parsed_book['id: '], parsed_book['title: '], path)
+                        download_txt(parsed_book['id'], parsed_book['title'], path)
 
                     if not args.skip_img:
-                        download_image(parsed_book['id: '], parsed_book['image_url: '], path)
+                        download_image(parsed_book['id'], parsed_book['image_url'], path)
                     break
                 except requests.exceptions.ConnectionError:
                     sleep(5)
