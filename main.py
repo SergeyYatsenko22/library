@@ -16,6 +16,18 @@ def check_for_redirect(response):
 
 
 def parse_book_page(content, book_url):
+    book_id = ''.join(
+        [num for num in filter(lambda num:
+                               num.isnumeric(), book_url)]
+    )
+    payload = {'id': book_id}
+    downloaded_book_url = 'https://tululu.org/txt.php'
+
+    book_downloading_response = requests.get(downloaded_book_url,
+                                             params=payload)
+    book_downloading_response.raise_for_status()
+    check_for_redirect(book_downloading_response)
+
     soup = BeautifulSoup(content.text, 'lxml')
     image_selector = '.bookimage img'
     image = soup.select(image_selector)[0]['src']
@@ -46,7 +58,7 @@ def parse_book_page(content, book_url):
         'genre': genres,
         'comments': comments,
         'image_url': image,
-        'image_id': f'{book_id}.jpg'
+        # 'image_id': f'{book_id}.jpg'
     }
     return book
 
@@ -58,7 +70,7 @@ def download_txt(book_id, title, folder):
     book_downloading_response = requests.get(downloaded_book_url,
                                              params=payload)
     book_downloading_response.raise_for_status()
-    check_for_redirect(book_downloading_response)
+    # check_for_redirect(book_downloading_response)
 
     file_name = f'{book_id}-{sanitize_filename(title)}.txt'
     with open(os.path.join(folder, file_name), 'wb') as file:
